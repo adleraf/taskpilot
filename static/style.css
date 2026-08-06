@@ -219,3 +219,44 @@ li{
 .edit-btn:hover{
     transform:scale(1.2);
 }
+.priority{
+
+    margin-top:8px;
+
+}
+
+.high{
+
+    color:#ef4444;
+
+    font-weight:600;
+
+}
+
+.medium{
+
+    color:#f59e0b;
+
+    font-weight:600;
+
+}
+
+.low{
+
+    color:#22c55e;
+
+    font-weight:600;
+
+}
+
+select{
+
+    padding:15px;
+
+    border:none;
+
+    border-radius:12px;
+
+    font-size:16px;
+
+}

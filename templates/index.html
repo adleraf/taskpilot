@@ -83,7 +83,15 @@
             placeholder="Enter a new task..."
             required
         >
+        <select name="priority">
 
+    <option value="High">🔴 High</option>
+
+    <option value="Medium" selected>🟡 Medium</option>
+
+    <option value="Low">🟢 Low</option>
+
+</select>
         <button type="submit">
             Add Task
         </button>
@@ -119,6 +127,29 @@
 
                 <span class="{% if task.completed %}completed{% endif %}">
                     {{ task.title }}
+                    <div class="priority">
+
+    {% if task.priority == "High" %}
+
+        <span class="high">
+            🔴 High
+        </span>
+
+    {% elif task.priority == "Medium" %}
+
+        <span class="medium">
+            🟡 Medium
+        </span>
+
+    {% else %}
+
+        <span class="low">
+            🟢 Low
+        </span>
+
+    {% endif %}
+
+</div>
                 </span>
 
             </div>
