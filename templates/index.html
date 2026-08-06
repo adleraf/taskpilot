@@ -1,28 +1,86 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TaskPilot</title>
+
+    <!-- Google Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
+    <!-- CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
 
 <div class="container">
 
     <h1>🚀 TaskPilot</h1>
 
+    <p class="subtitle">
+        Stay productive and keep crushing your goals.
+    </p>
+
+    <!-- Dashboard -->
+
+    <div class="dashboard">
+
+        <div class="card">
+
+            <h3>Total Tasks</h3>
+
+            <p>{{ total_tasks }}</p>
+
+        </div>
+
+        <div class="card">
+
+            <h3>Completed</h3>
+
+            <p>{{ completed_tasks }}</p>
+
+        </div>
+
+        <div class="card">
+
+            <h3>Pending</h3>
+
+            <p>{{ pending_tasks }}</p>
+
+        </div>
+
+    </div>
+
+    <!-- Progress -->
+
+    <div class="progress-container">
+
+        <div class="progress-bar">
+
+            <div
+                class="progress-fill"
+                style="width: {{ progress }}%;"
+            ></div>
+
+        </div>
+
+        <p>{{ progress }}% Completed</p>
+
+    </div>
+
+    <!-- Add Task -->
+
     <form method="POST">
 
         <input
             type="text"
             name="task"
-            placeholder="Enter a task..."
+            placeholder="Enter a new task..."
             required
         >
 
@@ -32,6 +90,8 @@
 
     </form>
 
+    <!-- Task List -->
+
     <ul>
 
         {% for task in tasks %}
@@ -40,12 +100,19 @@
 
             <div class="task-left">
 
-                <a class="toggle-btn" href="/toggle/{{ task.id }}">
+                <a
+                    class="toggle-btn"
+                    href="/toggle/{{ task.id }}"
+                >
 
                     {% if task.completed %}
+
                         ✅
+
                     {% else %}
+
                         ⬜
+
                     {% endif %}
 
                 </a>
@@ -56,8 +123,11 @@
 
             </div>
 
-            <a class="delete-btn" href="/delete/{{ task.id }}">
-                🗑
+            <a
+                class="delete-btn"
+                href="/delete/{{ task.id }}"
+            >
+                🗑️
             </a>
 
         </li>
@@ -69,4 +139,5 @@
 </div>
 
 </body>
+
 </html>

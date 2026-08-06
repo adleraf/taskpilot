@@ -157,4 +157,52 @@ li{
     text-decoration:line-through;
     color:gray;
 
+}.dashboard{
+    display:flex;
+    justify-content:space-between;
+    gap:20px;
+    margin-bottom:30px;
+}
+
+.card{
+    flex:1;
+    background:rgba(255,255,255,.15);
+    border-radius:18px;
+    padding:20px;
+    color:white;
+    text-align:center;
+}
+
+.card h3{
+    font-size:16px;
+    font-weight:500;
+}
+
+.card p{
+    margin-top:10px;
+    font-size:32px;
+    font-weight:700;
+}
+
+.progress-container{
+    margin-bottom:35px;
+}
+
+.progress-bar{
+    height:12px;
+    background:rgba(255,255,255,.2);
+    border-radius:20px;
+    overflow:hidden;
+}
+
+.progress-fill{
+    height:100%;
+    background:#22c55e;
+    transition:.4s;
+}
+
+.progress-container p{
+    margin-top:10px;
+    color:white;
+    font-weight:500;
 }

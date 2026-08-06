@@ -23,7 +23,6 @@ with app.app_context():
 def home():
 
     if request.method == "POST":
-
         title = request.form["task"]
 
         if title.strip():
@@ -33,21 +32,29 @@ def home():
 
         return redirect("/")
 
+    # Get all tasks
     tasks = Task.query.all()
 
-    return render_template("index.html", tasks=tasks)
+    # Dashboard statistics
+    total_tasks = len(tasks)
+    completed_tasks = len([task for task in tasks if task.completed])
+    pending_tasks = total_tasks - completed_tasks
+
+    if total_tasks > 0:
+        progress = int((completed_tasks / total_tasks) * 100)
+    else:
+        progress = 0
+
+    return render_template(
+        "index.html",
+        tasks=tasks,
+        total_tasks=total_tasks,
+        completed_tasks=completed_tasks,
+        pending_tasks=pending_tasks,
+        progress=progress
+    )
 
 
-@app.route("/delete/<int:id>")
-def delete(id):
-
-    task = Task.query.get_or_404(id)
-
-    db.session.delete(task)
-
-    db.session.commit()
-
-    return redirect("/")
 @app.route("/toggle/<int:id>")
 def toggle(id):
     task = Task.query.get_or_404(id)
@@ -58,6 +65,16 @@ def toggle(id):
 
     return redirect("/")
 
+
+@app.route("/delete/<int:id>")
+def delete(id):
+    task = Task.query.get_or_404(id)
+
+    db.session.delete(task)
+
+    db.session.commit()
+
+    return redirect("/")
 
 
 if __name__ == "__main__":
