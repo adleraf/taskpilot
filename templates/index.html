@@ -67,6 +67,20 @@
     </div>
 
     <!-- Add Task -->
+<form method="GET" class="search-form">
+
+    <input
+        type="text"
+        name="search"
+        placeholder="🔍 Search tasks..."
+        value="{{ request.args.get('search', '') }}"
+    >
+
+    <button type="submit">
+        Search
+    </button>
+
+</form> 
 
     <form method="POST">
 

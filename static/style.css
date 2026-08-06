@@ -380,3 +380,33 @@ li:hover{
     }
 
 }
+.search-form{
+
+    margin-bottom:25px;
+
+    display:flex;
+
+    gap:12px;
+
+}
+
+.search-form input{
+
+    flex:1;
+
+}
+.search-form{
+
+    margin-bottom:25px;
+
+    display:flex;
+
+    gap:12px;
+
+}
+
+.search-form input{
+
+    flex:1;
+
+}

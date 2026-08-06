@@ -3,11 +3,16 @@ from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 
+# Database Configuration
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///tasks.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
+
+# ==========================
+# Database Model
+# ==========================
 
 class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -21,20 +26,24 @@ with app.app_context():
     db.create_all()
 
 
+
+
 @app.route("/", methods=["GET", "POST"])
 def home():
 
+    
     if request.method == "POST":
 
         title = request.form["task"]
         priority = request.form["priority"]
+        due_date = request.form["due_date"]
 
         if title.strip():
 
             new_task = Task(
                 title=title,
                 priority=priority,
-                due_date = request.form["due_date"]
+                due_date=due_date
             )
 
             db.session.add(new_task)
@@ -42,8 +51,17 @@ def home():
 
         return redirect("/")
 
-    tasks = Task.query.all()
+    
+    search = request.args.get("search")
 
+    if search:
+        tasks = Task.query.filter(
+            Task.title.ilike(f"%{search}%")
+        ).all()
+    else:
+        tasks = Task.query.all()
+
+   
     total_tasks = len(tasks)
     completed_tasks = len([task for task in tasks if task.completed])
     pending_tasks = total_tasks - completed_tasks
@@ -63,6 +81,8 @@ def home():
     )
 
 
+
+
 @app.route("/toggle/<int:id>")
 def toggle(id):
 
@@ -73,6 +93,7 @@ def toggle(id):
     db.session.commit()
 
     return redirect("/")
+
 
 
 @app.route("/edit/<int:id>", methods=["GET", "POST"])
@@ -89,6 +110,7 @@ def edit(id):
         return redirect("/")
 
     return render_template("edit.html", task=task)
+
 
 
 @app.route("/delete/<int:id>")
