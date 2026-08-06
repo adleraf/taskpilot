@@ -22,7 +22,23 @@
 
 <div class="container">
 
-    <h1>🚀 TaskPilot</h1>
+    <h1>🚀 Welcome back, {{ current_user.username }} 👋</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+
+            <div class="flash {{ category }}">
+                {{ message }}
+            </div>
+
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<p class="subtitle">
+    Ready to get things done today?
+</p>
 
     <div style="text-align:right; margin-bottom:20px;">
 

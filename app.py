@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, url_for
+from flask import Flask, render_template, request, redirect, session, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
     LoginManager,
@@ -76,6 +76,7 @@ def home():
 
             db.session.add(new_task)
             db.session.commit()
+            flash("✅ Task added successfully!", "success")
 
         return redirect("/")
 
@@ -136,6 +137,8 @@ def register():
         db.session.add(new_user)
         db.session.commit()
 
+        flash("🎉 Account created successfully! Please login.", "success")
+
         return redirect("/login")
 
     return render_template("register.html")
@@ -154,6 +157,8 @@ def login():
 
             login_user(user)
 
+            flash(f"👋 Welcome back, {user.username}!", "success")
+
             return redirect("/")
 
         return "Invalid email or password"
@@ -166,6 +171,8 @@ def logout():
 
     logout_user()
 
+    flash("👋 You have been logged out.", "info")
+
     return redirect("/login")
 
 
@@ -177,6 +184,8 @@ def toggle(id):
     task.completed = not task.completed
 
     db.session.commit()
+
+    flash("🎉 Task updated!", "success")
 
     return redirect("/")
 
@@ -207,6 +216,8 @@ def delete(id):
     db.session.delete(task)
 
     db.session.commit()
+
+    flash("🗑️ Task deleted!", "danger")
 
     return redirect("/")
 
