@@ -206,3 +206,16 @@ li{
     color:white;
     font-weight:500;
 }
+.actions{
+    display:flex;
+    gap:12px;
+}
+
+.edit-btn{
+    text-decoration:none;
+    font-size:22px;
+}
+
+.edit-btn:hover{
+    transform:scale(1.2);
+}

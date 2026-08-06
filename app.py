@@ -23,6 +23,7 @@ with app.app_context():
 def home():
 
     if request.method == "POST":
+
         title = request.form["task"]
 
         if title.strip():
@@ -32,18 +33,16 @@ def home():
 
         return redirect("/")
 
-    # Get all tasks
     tasks = Task.query.all()
 
-    # Dashboard statistics
     total_tasks = len(tasks)
     completed_tasks = len([task for task in tasks if task.completed])
     pending_tasks = total_tasks - completed_tasks
 
+    progress = 0
+
     if total_tasks > 0:
         progress = int((completed_tasks / total_tasks) * 100)
-    else:
-        progress = 0
 
     return render_template(
         "index.html",
@@ -57,6 +56,7 @@ def home():
 
 @app.route("/toggle/<int:id>")
 def toggle(id):
+
     task = Task.query.get_or_404(id)
 
     task.completed = not task.completed
@@ -68,6 +68,7 @@ def toggle(id):
 
 @app.route("/delete/<int:id>")
 def delete(id):
+
     task = Task.query.get_or_404(id)
 
     db.session.delete(task)
@@ -75,6 +76,23 @@ def delete(id):
     db.session.commit()
 
     return redirect("/")
+
+
+# ⭐ NEW EDIT ROUTE
+@app.route("/edit/<int:id>", methods=["GET", "POST"])
+def edit(id):
+
+    task = Task.query.get_or_404(id)
+
+    if request.method == "POST":
+
+        task.title = request.form["title"]
+
+        db.session.commit()
+
+        return redirect("/")
+
+    return render_template("edit.html", task=task)
 
 
 if __name__ == "__main__":

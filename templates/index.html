@@ -123,12 +123,17 @@
 
             </div>
 
-            <a
-                class="delete-btn"
-                href="/delete/{{ task.id }}"
-            >
-                🗑️
-            </a>
+           <div class="actions">
+
+    <a class="edit-btn" href="/edit/{{ task.id }}">
+        ✏️
+    </a>
+
+    <a class="delete-btn" href="/delete/{{ task.id }}">
+        🗑️
+    </a>
+
+</div>
 
         </li>
 
