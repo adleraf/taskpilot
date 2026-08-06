@@ -14,6 +14,7 @@ class Task(db.Model):
     title = db.Column(db.String(200), nullable=False)
     completed = db.Column(db.Boolean, default=False)
     priority = db.Column(db.String(20), default="Medium")
+    due_date = db.Column(db.String(50))
 
 
 with app.app_context():
@@ -32,7 +33,8 @@ def home():
 
             new_task = Task(
                 title=title,
-                priority=priority
+                priority=priority,
+                due_date = request.form["due_date"]
             )
 
             db.session.add(new_task)

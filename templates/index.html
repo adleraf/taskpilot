@@ -2,9 +2,11 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TaskPilot</title>
+
+    <title>🚀 TaskPilot</title>
 
     <!-- Google Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,8 +14,8 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
 </head>
 
 <body>
@@ -31,27 +33,18 @@
     <div class="dashboard">
 
         <div class="card">
-
             <h3>Total Tasks</h3>
-
             <p>{{ total_tasks }}</p>
-
         </div>
 
         <div class="card">
-
             <h3>Completed</h3>
-
             <p>{{ completed_tasks }}</p>
-
         </div>
 
         <div class="card">
-
             <h3>Pending</h3>
-
             <p>{{ pending_tasks }}</p>
-
         </div>
 
     </div>
@@ -83,15 +76,21 @@
             placeholder="Enter a new task..."
             required
         >
+
         <select name="priority">
 
-    <option value="High">🔴 High</option>
+            <option value="High">🔴 High</option>
+            <option value="Medium" selected>🟡 Medium</option>
+            <option value="Low">🟢 Low</option>
 
-    <option value="Medium" selected>🟡 Medium</option>
+        </select>
 
-    <option value="Low">🟢 Low</option>
+        <input
+            type="date"
+            name="due_date"
+            required
+        >
 
-</select>
         <button type="submit">
             Add Task
         </button>
@@ -114,57 +113,62 @@
                 >
 
                     {% if task.completed %}
-
                         ✅
-
                     {% else %}
-
                         ⬜
-
                     {% endif %}
 
                 </a>
 
-                <span class="{% if task.completed %}completed{% endif %}">
-                    {{ task.title }}
+                <div>
+
+                    <span class="{% if task.completed %}completed{% endif %}">
+                        {{ task.title }}
+                    </span>
+
                     <div class="priority">
 
-    {% if task.priority == "High" %}
+                        {% if task.priority == "High" %}
 
-        <span class="high">
-            🔴 High
-        </span>
+                            <span class="high">🔴 High</span>
 
-    {% elif task.priority == "Medium" %}
+                        {% elif task.priority == "Medium" %}
 
-        <span class="medium">
-            🟡 Medium
-        </span>
+                            <span class="medium">🟡 Medium</span>
 
-    {% else %}
+                        {% else %}
 
-        <span class="low">
-            🟢 Low
-        </span>
+                            <span class="low">🟢 Low</span>
 
-    {% endif %}
+                        {% endif %}
 
-</div>
-                </span>
+                    </div>
+
+                    <div class="due-date">
+                        📅 {{ task.due_date }}
+                    </div>
+
+                </div>
 
             </div>
 
-           <div class="actions">
+            <div class="actions">
 
-    <a class="edit-btn" href="/edit/{{ task.id }}">
-        ✏️
-    </a>
+                <a
+                    class="edit-btn"
+                    href="/edit/{{ task.id }}"
+                >
+                    ✏️
+                </a>
 
-    <a class="delete-btn" href="/delete/{{ task.id }}">
-        🗑️
-    </a>
+                <a
+                    class="delete-btn"
+                    href="/delete/{{ task.id }}"
+                >
+                    🗑️
+                </a>
 
-</div>
+            </div>
 
         </li>
 
