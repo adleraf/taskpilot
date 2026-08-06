@@ -1,5 +1,15 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, session, url_for
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import (
+    LoginManager,
+    UserMixin,
+    login_user,
+    logout_user,
+    login_required,
+    current_user
+)
+from werkzeug.security import generate_password_hash, check_password_hash
+
 
 app = Flask(__name__)
 
@@ -9,10 +19,23 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
+login_manager = LoginManager()
 
-# ==========================
-# Database Model
-# ==========================
+login_manager.init_app(app)
+
+login_manager.login_view = "login"
+
+class User(UserMixin, db.Model):
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    username = db.Column(db.String(100), nullable=False)
+
+    email = db.Column(db.String(120), unique=True, nullable=False)
+
+    password = db.Column(db.String(255), nullable=False)
+
+
 
 class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -25,7 +48,9 @@ class Task(db.Model):
 with app.app_context():
     db.create_all()
 
-
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -80,7 +105,37 @@ def home():
         progress=progress
     )
 
+@app.route("/register", methods=["GET", "POST"])
+def register():
 
+    if request.method == "POST":
+
+        username = request.form["username"]
+        email = request.form["email"]
+        password = request.form["password"]
+
+        # Check if email already exists
+        existing_user = User.query.filter_by(email=email).first()
+
+        if existing_user:
+            return "Email already exists!"
+
+        # Hash the password
+        hashed_password = generate_password_hash(password)
+
+        # Create user
+        new_user = User(
+            username=username,
+            email=email,
+            password=hashed_password
+        )
+
+        db.session.add(new_user)
+        db.session.commit()
+
+        return redirect("/login")
+
+    return render_template("register.html")
 
 
 @app.route("/toggle/<int:id>")
