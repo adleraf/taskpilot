@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskPilot</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>🚀 TaskPilot</h1>
+
+    <form method="POST">
+
+        <input
+            type="text"
+            name="task"
+            placeholder="Enter a task..."
+            required
+        >
+
+        <button type="submit">
+            Add Task
+        </button>
+
+    </form>
+
+    <ul>
+
+        {% for task in tasks %}
+
+        <li>
+
+            <span>{{ task.title }}</span>
+
+            <a class="delete-btn" href="/delete/{{ task.id }}">
+                🗑️
+            </a>
+
+        </li>
+
+        {% endfor %}
+
+    </ul>
+
+</div>
+
+</body>
+
+</html>
