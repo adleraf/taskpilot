@@ -1,5 +1,7 @@
+import os
 from datetime import datetime, date
-from flask import Flask, render_template, request, redirect, session, url_for, flash
+
+from flask import Flask, render_template, request, redirect, url_for, flash, abort
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
     LoginManager,
@@ -7,14 +9,16 @@ from flask_login import (
     login_user,
     logout_user,
     login_required,
-    current_user
+    current_user,
 )
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
 app = Flask(__name__)
 
-app.config["SECRET_KEY"] = "taskpilot-super-secret-key"
+# Secret key should come from the environment in production.
+# Falls back to a dev-only value so local runs still work.
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-only-change-me")
 
 # Database Configuration
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///tasks.db"
@@ -23,21 +27,15 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 
 login_manager = LoginManager()
-
 login_manager.init_app(app)
-
 login_manager.login_view = "login"
 
+
 class User(UserMixin, db.Model):
-
     id = db.Column(db.Integer, primary_key=True)
-
-    username = db.Column(db.String(100), nullable=False)
-
+    username = db.Column(db.String(100), nullable=False, unique=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
-
     password = db.Column(db.String(255), nullable=False)
-
 
 
 class Task(db.Model):
@@ -47,66 +45,74 @@ class Task(db.Model):
     priority = db.Column(db.String(20), default="Medium")
     due_date = db.Column(db.String(50))
 
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+
 
 with app.app_context():
     db.create_all()
+
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
 
+def _get_owned_task_or_404(task_id):
+    """Fetch a task and make sure it belongs to the current user, or abort."""
+    task = Task.query.get_or_404(task_id)
+    if task.user_id != current_user.id:
+        abort(403)
+    return task
+
+
 @app.route("/", methods=["GET", "POST"])
 @login_required
 def home():
-
     if request.method == "POST":
+        title = request.form.get("task", "").strip()
+        priority = request.form.get("priority", "Medium")
+        due_date = request.form.get("due_date", "")
 
-        title = request.form["task"]
-        priority = request.form["priority"]
-        due_date = request.form["due_date"]
+        if not title:
+            flash("Task title can't be empty!", "danger")
+            return redirect(url_for("home"))
 
-        # Check if the selected date is in the past
-        selected_date = datetime.strptime(due_date, "%Y-%m-%d").date()
+        if due_date:
+            try:
+                selected_date = datetime.strptime(due_date, "%Y-%m-%d").date()
+            except ValueError:
+                flash("Invalid due date format!", "danger")
+                return redirect(url_for("home"))
 
-        if selected_date < date.today():
-            flash("❌ You cannot choose a past due date!", "danger")
-            return redirect("/")
+            if selected_date < date.today():
+                flash("You cannot choose a past due date!", "danger")
+                return redirect(url_for("home"))
 
-        if title.strip():
+        new_task = Task(
+            title=title,
+            priority=priority,
+            due_date=due_date,
+            user_id=current_user.id,
+        )
+        db.session.add(new_task)
+        db.session.commit()
+        flash("Task added successfully!", "success")
 
-            new_task = Task(
-                title=title,
-                priority=priority,
-                due_date=due_date
-            )
+        return redirect(url_for("home"))
 
-            db.session.add(new_task)
-            db.session.commit()
-
-            flash("✅ Task added successfully!", "success")
-
-        return redirect("/")
-
-    # Search
+    # Search (scoped to the logged-in user)
     search = request.args.get("search")
 
+    query = Task.query.filter_by(user_id=current_user.id)
     if search:
-        tasks = Task.query.filter(
-            Task.title.ilike(f"%{search}%")
-        ).all()
-    else:
-        tasks = Task.query.all()
+        query = query.filter(Task.title.ilike(f"%{search}%"))
+    tasks = query.all()
 
     # Dashboard stats
     total_tasks = len(tasks)
     completed_tasks = len([task for task in tasks if task.completed])
     pending_tasks = total_tasks - completed_tasks
-
-    if total_tasks > 0:
-        progress = int((completed_tasks / total_tasks) * 100)
-    else:
-        progress = 0
+    progress = int((completed_tasks / total_tasks) * 100) if total_tasks > 0 else 0
 
     # Today's date for the HTML date picker
     today = date.today().strftime("%Y-%m-%d")
@@ -118,121 +124,102 @@ def home():
         completed_tasks=completed_tasks,
         pending_tasks=pending_tasks,
         progress=progress,
-        today=today
+        today=today,
     )
 
-    
+
 @app.route("/register", methods=["GET", "POST"])
 def register():
-
     if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        email = request.form.get("email", "").strip()
+        password = request.form.get("password", "")
 
-        username = request.form["username"]
-        email = request.form["email"]
-        password = request.form["password"]
+        if not username or not email or not password:
+            flash("All fields are required.", "danger")
+            return redirect(url_for("register"))
 
-        # Check if email already exists
         existing_user = User.query.filter_by(email=email).first()
-
         if existing_user:
-            return "Email already exists!"
+            flash("Email already exists!", "danger")
+            return redirect(url_for("register"))
 
-        # Hash the password
         hashed_password = generate_password_hash(password)
 
-        # Create user
-        new_user = User(
-            username=username,
-            email=email,
-            password=hashed_password
-        )
-
+        new_user = User(username=username, email=email, password=hashed_password)
         db.session.add(new_user)
         db.session.commit()
 
-        flash("🎉 Account created successfully! Please login.", "success")
-
-        return redirect("/login")
+        flash("Account created successfully! Please login.", "success")
+        return redirect(url_for("login"))
 
     return render_template("register.html")
 
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
-
     if request.method == "POST":
-
-        email = request.form["email"]
-        password = request.form["password"]
+        email = request.form.get("email", "").strip()
+        password = request.form.get("password", "")
 
         user = User.query.filter_by(email=email).first()
 
         if user and check_password_hash(user.password, password):
-
             login_user(user)
+            flash(f"Welcome back, {user.username}!", "success")
+            return redirect(url_for("home"))
 
-            flash(f"👋 Welcome back, {user.username}!", "success")
-
-            return redirect("/")
-
-        return "Invalid email or password"
+        flash("Invalid email or password", "danger")
+        return redirect(url_for("login"))
 
     return render_template("login.html")
+
 
 @app.route("/logout")
 @login_required
 def logout():
-
     logout_user()
-
-    flash("👋 You have been logged out.", "info")
-
-    return redirect("/login")
+    flash("You have been logged out.", "info")
+    return redirect(url_for("login"))
 
 
-@app.route("/toggle/<int:id>")
+@app.route("/toggle/<int:id>", methods=["POST"])
+@login_required
 def toggle(id):
-
-    task = Task.query.get_or_404(id)
-
+    task = _get_owned_task_or_404(id)
     task.completed = not task.completed
-
     db.session.commit()
-
-    flash("🎉 Task updated!", "success")
-
-    return redirect("/")
-
+    flash("Task updated!", "success")
+    return redirect(url_for("home"))
 
 
 @app.route("/edit/<int:id>", methods=["GET", "POST"])
+@login_required
 def edit(id):
-
-    task = Task.query.get_or_404(id)
+    task = _get_owned_task_or_404(id)
 
     if request.method == "POST":
+        title = request.form.get("title", "").strip()
+        if not title:
+            flash("Task title can't be empty!", "danger")
+            return redirect(url_for("edit", id=id))
 
-        task.title = request.form["title"]
-
+        task.title = title
         db.session.commit()
-
-        return redirect("/")
+        flash("Task updated!", "success")
+        return redirect(url_for("home"))
 
     return render_template("edit.html", task=task)
 
 
-
-@app.route("/delete/<int:id>")
+@app.route("/delete/<int:id>", methods=["POST"])
+@login_required
 def delete(id):
-
-    task = Task.query.get_or_404(id)
-
+    task = _get_owned_task_or_404(id)
     db.session.delete(task)
-
     db.session.commit()
-
-    flash("🗑️ Task deleted!", "danger")
-
-    return redirect("/")
+    flash("Task deleted!", "danger")
+    return redirect(url_for("home"))
 
 
 if __name__ == "__main__":
