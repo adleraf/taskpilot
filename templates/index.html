@@ -123,11 +123,12 @@
 
         </select>
 
-        <input
-            type="date"
-            name="due_date"
-            required
-        >
+     <input
+    type="date"
+    name="due_date"
+    min="{{ today }}"
+    required
+     >
 
         <button type="submit">
             Add Task

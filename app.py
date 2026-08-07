@@ -1,3 +1,4 @@
+from datetime import datetime, date
 from flask import Flask, render_template, request, redirect, session, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
@@ -59,12 +60,18 @@ def load_user(user_id):
 @login_required
 def home():
 
-    
     if request.method == "POST":
 
         title = request.form["task"]
         priority = request.form["priority"]
         due_date = request.form["due_date"]
+
+        # Check if the selected date is in the past
+        selected_date = datetime.strptime(due_date, "%Y-%m-%d").date()
+
+        if selected_date < date.today():
+            flash("❌ You cannot choose a past due date!", "danger")
+            return redirect("/")
 
         if title.strip():
 
@@ -76,11 +83,12 @@ def home():
 
             db.session.add(new_task)
             db.session.commit()
+
             flash("✅ Task added successfully!", "success")
 
         return redirect("/")
 
-    
+    # Search
     search = request.args.get("search")
 
     if search:
@@ -90,7 +98,7 @@ def home():
     else:
         tasks = Task.query.all()
 
-   
+    # Dashboard stats
     total_tasks = len(tasks)
     completed_tasks = len([task for task in tasks if task.completed])
     pending_tasks = total_tasks - completed_tasks
@@ -100,15 +108,20 @@ def home():
     else:
         progress = 0
 
+    # Today's date for the HTML date picker
+    today = date.today().strftime("%Y-%m-%d")
+
     return render_template(
         "index.html",
         tasks=tasks,
         total_tasks=total_tasks,
         completed_tasks=completed_tasks,
         pending_tasks=pending_tasks,
-        progress=progress
+        progress=progress,
+        today=today
     )
 
+    
 @app.route("/register", methods=["GET", "POST"])
 def register():
 
