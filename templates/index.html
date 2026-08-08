@@ -2,221 +2,153 @@
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>🚀 TaskPilot</title>
-
-    <!-- Google Font -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
+    <title>✈️ TaskPilot</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-
 </head>
 
 <body>
 
+<div class="bg-orb bg-orb-1"></div>
+<div class="bg-orb bg-orb-2"></div>
+<div class="bg-orb bg-orb-3"></div>
+
 <div class="container">
 
-    <h1>🚀 Welcome back, {{ current_user.username }} 👋</h1>
+    <div class="top-bar">
+        <a href="/logout" class="logout-btn">🚪 Logout</a>
+    </div>
+
+    <div class="brand-badge">✈️ TaskPilot · Productivity OS</div>
+
+    <h1>Hey {{ current_user.username }} 👋</h1>
+    <p class="subtitle">✨ Stay focused. Crush your goals. One task at a time.</p>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
         {% for category, message in messages %}
-
-            <div class="flash {{ category }}">
-                {{ message }}
-            </div>
-
+            <div class="flash {{ category }}">{{ message }}</div>
         {% endfor %}
     {% endif %}
-{% endwith %}
-
-<p class="subtitle">
-    Ready to get things done today?
-</p>
-
-    <div style="text-align:right; margin-bottom:20px;">
-
-    <a href="/logout">
-        Logout 🚪
-    </a>
-
-</div>
-
-    <p class="subtitle">
-        Stay productive and keep crushing your goals.
-    </p>
-
-    <!-- Dashboard -->
+    {% endwith %}
 
     <div class="dashboard">
-
         <div class="card">
-            <h3>Total Tasks</h3>
+            <span class="card-icon">📋</span>
+            <h3>Total</h3>
             <p>{{ total_tasks }}</p>
         </div>
-
         <div class="card">
-            <h3>Completed</h3>
+            <span class="card-icon">✅</span>
+            <h3>Done</h3>
             <p>{{ completed_tasks }}</p>
         </div>
-
         <div class="card">
+            <span class="card-icon">⏳</span>
             <h3>Pending</h3>
             <p>{{ pending_tasks }}</p>
         </div>
-
     </div>
-
-    <!-- Progress -->
 
     <div class="progress-container">
-
-        <div class="progress-bar">
-
-            <div
-                class="progress-fill"
-                style="width: {{ progress }}%;"
-            ></div>
-
+        <div class="progress-header">
+            <span>🎯 Progress</span>
+            <span>{{ progress }}%</span>
         </div>
-
-        <p>{{ progress }}% Completed</p>
-
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: {{ progress }}%;"></div>
+        </div>
     </div>
 
-    <!-- Add Task -->
-<form method="GET" class="search-form">
+    <div class="glass-panel">
+        <div class="section-label">🔍 Search</div>
+        <form method="GET" class="search-form">
+            <input
+                type="text"
+                name="search"
+                placeholder="Find a task..."
+                value="{{ request.args.get('search', '') }}"
+            >
+            <button type="submit">Search</button>
+        </form>
+    </div>
 
-    <input
-        type="text"
-        name="search"
-        placeholder="🔍 Search tasks..."
-        value="{{ request.args.get('search', '') }}"
-    >
+    <div class="glass-panel">
+        <div class="section-label">➕ New Task</div>
+        <form method="POST">
+            <input
+                type="text"
+                name="task"
+                placeholder="What needs to get done?"
+                required
+            >
 
-    <button type="submit">
-        Search
-    </button>
+            <div class="task-options">
+                <select name="priority" required>
+                    <option value="High">🔴 High</option>
+                    <option value="Medium" selected>🟡 Medium</option>
+                    <option value="Low">🟢 Low</option>
+                </select>
 
-</form> 
+                <input type="date" name="due_date" min="{{ today }}">
 
-    <form method="POST">
+                <button type="submit">✨ Add Task</button>
+            </div>
+        </form>
+    </div>
 
-        <input
-            type="text"
-            name="task"
-            placeholder="Enter a new task..."
-            required
-        >
-
-        <select name="priority">
-
-            <option value="High">🔴 High</option>
-            <option value="Medium" selected>🟡 Medium</option>
-            <option value="Low">🟢 Low</option>
-
-        </select>
-
-     <input
-    type="date"
-    name="due_date"
-    min="{{ today }}"
-    required
-     >
-
-        <button type="submit">
-            Add Task
-        </button>
-
-    </form>
-
-    <!-- Task List -->
+    <div class="task-list-header">
+        <div class="section-label" style="margin-bottom: 0;">📝 Your Tasks</div>
+        <span class="task-count">{{ tasks|length }} showing</span>
+    </div>
 
     <ul>
-
         {% for task in tasks %}
-
-        <li>
-
+        <li class="task-card">
             <div class="task-left">
-
-                <a
-                    class="toggle-btn"
-                    href="/toggle/{{ task.id }}"
-                >
-
-                    {% if task.completed %}
-                        ✅
-                    {% else %}
-                        ⬜
-                    {% endif %}
-
-                </a>
+                <form action="/toggle/{{ task.id }}" method="POST" style="display:inline;">
+                    <button type="submit" class="toggle-btn" title="Toggle complete">
+                        {% if task.completed %}✅{% else %}⬜{% endif %}
+                    </button>
+                </form>
 
                 <div>
-
                     <span class="{% if task.completed %}completed{% endif %}">
                         {{ task.title }}
                     </span>
 
                     <div class="priority">
-
                         {% if task.priority == "High" %}
-
                             <span class="high">🔴 High</span>
-
                         {% elif task.priority == "Medium" %}
-
                             <span class="medium">🟡 Medium</span>
-
                         {% else %}
-
                             <span class="low">🟢 Low</span>
-
                         {% endif %}
-
                     </div>
 
-                    <div class="due-date">
-                        📅 {{ task.due_date }}
-                    </div>
-
+                    {% if task.due_date %}
+                    <div class="due-date">📅 Due {{ task.due_date }}</div>
+                    {% endif %}
                 </div>
-
             </div>
 
             <div class="actions">
-
-                <a
-                    class="edit-btn"
-                    href="/edit/{{ task.id }}"
-                >
-                    ✏️
-                </a>
-
-                <a
-                    class="delete-btn"
-                    href="/delete/{{ task.id }}"
-                >
-                    🗑️
-                </a>
-
+                <a class="edit-btn" href="/edit/{{ task.id }}" title="Edit">✏️</a>
+                <form action="/delete/{{ task.id }}" method="POST" style="display:inline;">
+                    <button type="submit" class="delete-btn" title="Delete">🗑️</button>
+                </form>
             </div>
-
         </li>
-
+        {% else %}
+        <li class="task-card empty-state">
+            🌟 No tasks yet — add your first one above!
+        </li>
         {% endfor %}
-
     </ul>
 
 </div>
 
 </body>
-
 </html>

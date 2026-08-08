@@ -16,11 +16,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 
-# Secret key should come from the environment in production.
-# Falls back to a dev-only value so local runs still work.
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-only-change-me")
-
-# Database Configuration
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///tasks.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
@@ -58,7 +54,6 @@ def load_user(user_id):
 
 
 def _get_owned_task_or_404(task_id):
-    """Fetch a task and make sure it belongs to the current user, or abort."""
     task = Task.query.get_or_404(task_id)
     if task.user_id != current_user.id:
         abort(403)
@@ -100,21 +95,18 @@ def home():
 
         return redirect(url_for("home"))
 
-    # Search (scoped to the logged-in user)
     search = request.args.get("search")
 
-    query = Task.query.filter_by(user_id=current_user.id)
-    if search:
-        query = query.filter(Task.title.ilike(f"%{search}%"))
-    tasks = query.all()
-
-    # Dashboard stats
-    total_tasks = len(tasks)
-    completed_tasks = len([task for task in tasks if task.completed])
+    all_tasks = Task.query.filter_by(user_id=current_user.id).all()
+    total_tasks = len(all_tasks)
+    completed_tasks = len([task for task in all_tasks if task.completed])
     pending_tasks = total_tasks - completed_tasks
     progress = int((completed_tasks / total_tasks) * 100) if total_tasks > 0 else 0
 
-    # Today's date for the HTML date picker
+    tasks = all_tasks
+    if search:
+        tasks = [task for task in all_tasks if search.lower() in task.title.lower()]
+
     today = date.today().strftime("%Y-%m-%d")
 
     return render_template(
@@ -139,9 +131,12 @@ def register():
             flash("All fields are required.", "danger")
             return redirect(url_for("register"))
 
-        existing_user = User.query.filter_by(email=email).first()
-        if existing_user:
+        if User.query.filter_by(email=email).first():
             flash("Email already exists!", "danger")
+            return redirect(url_for("register"))
+
+        if User.query.filter_by(username=username).first():
+            flash("Username already exists!", "danger")
             return redirect(url_for("register"))
 
         hashed_password = generate_password_hash(password)
